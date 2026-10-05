@@ -1,4 +1,4 @@
-﻿# NetWatch
+# NetWatch
 
 ![CI](https://github.com/krisztian-kovacs-sotet/netwatch/actions/workflows/ci.yml/badge.svg)
 
