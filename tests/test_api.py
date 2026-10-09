@@ -48,6 +48,28 @@ def test_acknowledge_alert(client: TestClient, scanner: FakeScanner) -> None:
     assert client.get("/alerts", params={"unacknowledged_only": True}).json() == []
 
 
+def test_stats_summarises_devices_and_alerts(client: TestClient, scanner: FakeScanner) -> None:
+    assert client.get("/stats").json() == {
+        "devices": 0,
+        "trusted_devices": 0,
+        "untrusted_devices": 0,
+        "unacknowledged_alerts": 0,
+    }
+
+    scanner.devices = [LAPTOP, PHONE]
+    client.post("/scans")
+    devices = client.get("/devices").json()
+    client.patch(f"/devices/{devices[0]['id']}", json={"trusted": True})
+    client.post(f"/alerts/{client.get('/alerts').json()[0]['id']}/acknowledge")
+
+    assert client.get("/stats").json() == {
+        "devices": 2,
+        "trusted_devices": 1,
+        "untrusted_devices": 1,
+        "unacknowledged_alerts": 1,
+    }
+
+
 def test_missing_resources_return_404(client: TestClient) -> None:
     assert client.get("/devices/999").status_code == 404
     assert client.patch("/devices/999", json={"trusted": True}).status_code == 404

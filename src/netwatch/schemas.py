@@ -31,6 +31,13 @@ class AlertOut(BaseModel):
     acknowledged: bool
 
 
+class Stats(BaseModel):
+    devices: int
+    trusted_devices: int
+    untrusted_devices: int
+    unacknowledged_alerts: int
+
+
 class ScanResult(BaseModel):
     devices_seen: int
     new_alerts: int

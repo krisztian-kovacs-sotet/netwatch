@@ -2,12 +2,12 @@ from collections.abc import Iterator
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from netwatch.inventory import run_scan
 from netwatch.models import Alert, Device
-from netwatch.schemas import AlertOut, DeviceOut, DeviceUpdate, ScanResult
+from netwatch.schemas import AlertOut, DeviceOut, DeviceUpdate, ScanResult, Stats
 
 router = APIRouter()
 
@@ -23,6 +23,19 @@ SessionDep = Annotated[Session, Depends(get_session)]
 @router.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@router.get("/stats")
+def stats(session: SessionDep) -> Stats:
+    devices = session.scalar(select(func.count()).select_from(Device)) or 0
+    trusted = session.scalar(select(func.count()).where(Device.trusted.is_(True))) or 0
+    unacknowledged = session.scalar(select(func.count()).where(Alert.acknowledged.is_(False))) or 0
+    return Stats(
+        devices=devices,
+        trusted_devices=trusted,
+        untrusted_devices=devices - trusted,
+        unacknowledged_alerts=unacknowledged,
+    )
 
 
 @router.get("/devices", response_model=list[DeviceOut])
